@@ -3,6 +3,7 @@
 	class wikieducator{
 	
 		var $page_object;
+		var $output = "";
 		
 		function ajax(){
 		
@@ -52,8 +53,6 @@
 						$id = get_the_id();
 						
 						$parent = get_post_meta($id, "wiki_parent");
-						
-						echo "PARENT IS " . $parent[0] . " " . get_the_title() . "\n";
 						
 						if($parent[0]!=1){
 						
@@ -325,22 +324,26 @@
 					$check = explode("</ul>",$child);
 					
 					for($x=0;$x!=(count($check)-1);$x++){
-						$pointer = $pointer->parent;
+						if(isset($pointer->parent)){
+							$pointer = $pointer->parent;
+						}
 					}
 					
 				}else{
 					$href = explode('href="', $child);
-					$href = explode('"', $href[1]);
-					$href = $href[0];
-					$content = explode(">", $child);
-					$content = explode("<", $content[1]);
-					$content = $content[0];
-					
-					$data->href = $href;
-					$data->content = $content;
-					$data->children = new StdClass();
-					if(trim($content)!=""){
-						$pointer->{trim($content)} = $data;
+					if(isset($href[1])){
+						$href = explode('"', $href[1]);
+						$href = $href[0];
+						$content = explode(">", $child);
+						$content = explode("<", $content[1]);
+						$content = $content[0];
+						
+						$data->href = $href;
+						$data->content = $content;
+						$data->children = new StdClass();
+						if(trim($content)!=""){
+							$pointer->{trim($content)} = $data;
+						}
 					}
 					
 				}
@@ -358,10 +361,12 @@
 				
 				$content = $html->find('div[id=mw-content-text]');
 				
+				$output = "";
+				
 				foreach($content as $node){
 				
-					$data = $node->innertext;
-				
+					$data = substr($node->innertext, strpos($node->innertext,'id="wesnapform"'), strlen($node->innertext));
+					
 				}
 				
 				$this->make_page_object($data);
@@ -373,8 +378,8 @@
 		public function render_menu($content, $depth, $parent){
 		
 			foreach($content as $key){
-				if($key->content!=""){
-					$this->page_list[$counter] = array($key);
+				if(isset($key->content)){
+					$this->page_list[$this->counter] = array($key);
 					
 					$this->output .= "<p><input type='checkbox' parent='" . $parent . "' title='" . addslashes($key->content) . "' page_id='" . $this->counter . "' prev='" . ($this->counter - 1) . "' next='" . ($this->counter + 1) . "' base='" . $this->url . "' checked value='" . $key->href . "' />";
 					for($x=0; $x!=$depth; $x++){
